@@ -1,24 +1,99 @@
+import pytest
 from main import BooksCollector
 
-# класс TestBooksCollector объединяет набор тестов, которыми мы покрываем наше приложение BooksCollector
-# обязательно указывать префикс Test
 class TestBooksCollector:
 
-    # пример теста:
-    # обязательно указывать префикс test_
-    # дальше идет название метода, который тестируем add_new_book_
-    # затем, что тестируем add_two_books - добавление двух книг
-    def test_add_new_book_add_two_books(self):
-        # создаем экземпляр (объект) класса BooksCollector
-        collector = BooksCollector()
+    @pytest.fixture
+    def collector(self):
+        return BooksCollector()
 
-        # добавляем две книги
+    @pytest.mark.parametrize(
+        'book_name_valid',
+        [
+            'Я', # 1 символ
+            'Гарри Поттер и Дары Смерти: Часть первая', #40 символов
+        ]
+
+    )
+    def test_add_new_book_valid_lengths(self, collector, book_name_valid):
+        collector.add_new_book(book_name_valid)
+        assert len(book_name_valid) <= 40 and book_name_valid in collector.get_books_genre()
+
+    @pytest.mark.parametrize(
+        'book_name_invalid',
+        [
+            '',  # 0 символ
+            'Приключения Шерлока Холмса и док. Ватсона'  # 41 символов
+        ]
+    )
+    def test_add_new_book_invalid_lengths(self, collector, book_name_invalid):
+        collector.add_new_book(book_name_invalid)
+        assert (len(book_name_invalid) > 40 or len(book_name_invalid) == 0) and book_name_invalid not in collector.get_books_genre()
+
+    def test_add_new_book_add_two_books(self, collector):
         collector.add_new_book('Гордость и предубеждение и зомби')
         collector.add_new_book('Что делать, если ваш кот хочет вас убить')
+        assert len(collector.get_books_genre()) == 2
 
-        # проверяем, что добавилось именно две
-        # словарь books_rating, который нам возвращает метод get_books_rating, имеет длину 2
-        assert len(collector.get_books_rating()) == 2
+    def test_add_new_book_add_duble_books(self, collector):
+        collector.add_new_book('Гордость и предубеждение и зомби')
+        collector.add_new_book('Гордость и предубеждение и зомби')
+        assert len(collector.get_books_genre()) == 1
 
-    # напиши свои тесты ниже
-    # чтобы тесты были независимыми в каждом из них создавай отдельный экземпляр класса BooksCollector()
+    def test_set_book_genre_existing_genre(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1','Комедии')
+        assert collector.books_genre['1+1'] == 'Комедии'
+
+    def test_set_book_genre_coexisting_genre(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1','Комеди')
+        assert collector.books_genre['1+1'] == ''
+
+    def test_get_book_genre_existing_name(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        assert collector.get_book_genre('1+1') == 'Комедии'
+
+    def test_get_books_with_specific_genre_existing_genre(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        assert '1+1' in collector.get_books_with_specific_genre('Комедии')
+
+    def test_get_books_genre_list_books_genre(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        assert collector.get_books_genre() == {'1+1': 'Комедии'}
+
+    def test_get_books_for_children_excludes_age_rating(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        collector.add_new_book('Оно')
+        collector.set_book_genre('Оно', 'Ужасы')
+        assert 'Оно' not in collector.get_books_for_children()
+        assert '1+1' in collector.get_books_for_children()
+
+    def test_add_book_in_favorites_new_book(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        collector.add_book_in_favorites('1+1')
+        assert '1+1' in collector.get_list_of_favorites_books()
+
+    def test_add_book_in_favorites_duble_book(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        collector.add_book_in_favorites('1+1')
+        collector.add_book_in_favorites('1+1')
+        assert len(collector.get_list_of_favorites_books()) == 1
+
+    def test_add_book_in_favorites_book_not_in_collector(self, collector):
+        collector.add_book_in_favorites('Это Мы') # такой книги нет в словаре
+        assert len(collector.get_list_of_favorites_books()) == 0
+
+    def test_delete_book_from_favorites_existing_book(self, collector):
+        collector.add_new_book('1+1')
+        collector.set_book_genre('1+1', 'Комедии')
+        collector.add_book_in_favorites('1+1')
+        collector.delete_book_from_favorites('1+1')
+        assert '1+1' not in collector.get_list_of_favorites_books()
+
