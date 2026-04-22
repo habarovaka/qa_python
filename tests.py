@@ -79,18 +79,35 @@ class TestBooksCollector:
         collector.set_book_genre('1+1', 'Комедии')
         assert '1+1' in collector.get_books_for_children()
 
-    def test_add_book_in_favorites_new_book(self, collector):
-        collector.add_new_book('1+1')
-        collector.set_book_genre('1+1', 'Комедии')
-        collector.add_book_in_favorites('1+1')
-        assert '1+1' in collector.get_list_of_favorites_books()
+    @pytest.mark.parametrize(
+        'name, genre',
+        [
+            ['1+1', 'Комедии'],
+            ['Оно', 'Ужасы'],
+            ['Зыездные воины', 'Фантастика']
+        ]
+    )
+    def test_add_book_in_favorites_various_books(self, collector, name, genre):
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        collector.add_book_in_favorites(name)
+        assert name in collector.get_list_of_favorites_books()
 
-    def test_add_book_in_favorites_duble_book(self, collector):
-        collector.add_new_book('1+1')
-        collector.set_book_genre('1+1', 'Комедии')
-        collector.add_book_in_favorites('1+1')
-        collector.add_book_in_favorites('1+1')
+    @pytest.mark.parametrize(
+        'name, genre',
+        [
+            ['1+1', 'Комедии'],
+            ['Оно', 'Ужасы'],
+            ['Звездные воины', 'Фантастика']
+        ]
+    )
+    def test_add_book_in_favorites_duble_book(self, collector, name, genre):
+        collector.add_new_book(name)
+        collector.set_book_genre(name, genre)
+        collector.add_book_in_favorites(name)
+        collector.add_book_in_favorites(name)
         assert len(collector.get_list_of_favorites_books()) == 1
+
 
     def test_add_book_in_favorites_book_not_in_collector(self, collector):
         collector.add_book_in_favorites('Это Мы') # такой книги нет в словаре
