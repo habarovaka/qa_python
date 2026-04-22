@@ -49,7 +49,7 @@ class TestBooksCollector:
         collector.set_book_genre('1+1','Комедии')
         assert collector.books_genre['1+1'] == 'Комедии'
 
-    def test_set_book_genre_coexisting_genre(self, collector):
+    def test_set_book_genre_non_existent_genre_not_assigned(self, collector):
         collector.add_new_book('1+1')
         collector.set_book_genre('1+1','Комеди')
         assert collector.books_genre['1+1'] == ''
